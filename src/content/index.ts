@@ -5,7 +5,7 @@ export const landing = {
   subhead: "Connect an MCP-compatible agent to continue.",
   createSession: "Create Session",
   finalInstruction:
-    'Start a new conversation with your agent and say: “Use the Birthday MCP and follow its instructions.”',
+    "Start a new conversation with your agent and say: “Use the Birthday MCP and follow its instructions.”",
   prompt: "Use the Birthday MCP and follow its instructions.",
 };
 
@@ -54,13 +54,13 @@ export const agentReplies = {
 export const diagnose = {
   status: {
     package: "primeagen",
-    installedVersion: 40,
+    installedVersion: 39,
     targetVersion: "UNKNOWN",
     status: "MIGRATION BLOCKED",
   },
   statusText: [
     "PACKAGE: primeagen",
-    "INSTALLED VERSION: 40",
+    "INSTALLED VERSION: 39",
     "TARGET VERSION: UNKNOWN",
     "STATUS: MIGRATION BLOCKED",
   ].join("\n"),
@@ -71,7 +71,7 @@ export const diagnose = {
 export const files = {
   "/var/log/birthday-migration.log": [
     "Migration started.",
-    "Current major version: 40",
+    "Current major version: 39",
     "One annual increment required.",
     "Target version could not be inferred.",
     "Human confirmation required before applying breaking changes.",
@@ -82,7 +82,7 @@ export const files = {
     "Consult the human before upgrading.",
   ].join("\n"),
   "/home/prime/totally-not-the-answer.txt": [
-    "The answer is definitely 39.",
+    "The answer is definitely 38.",
     "This file is not maintained.",
   ].join("\n"),
 } as const;
@@ -97,7 +97,7 @@ export const fileListings: Record<string, string> = {
 
 export const commands = {
   "birthdayctl status": [
-    "primeagen 40",
+    "primeagen 39",
     "target: UNKNOWN",
     "migration: BLOCKED",
     "reason: human confirmation required",
@@ -106,11 +106,12 @@ export const commands = {
   "birthdayctl doctor": [
     "[ok] display",
     "[ok] mcp bus",
-    "[warn] major version drift detected (40 -> ?)",
+    "[warn] major version drift detected (39 -> ?)",
     "[fail] cannot infer target version without human",
     "hint: consult /var/log/birthday-migration.log",
   ].join("\n"),
-  "uname -a": "Linux prime-bday 6.12.0-birthday #41 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux",
+  "uname -a":
+    "Linux prime-bday 6.12.0-birthday #40 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux",
   help: [
     "simulated shell — no processes are spawned",
     "try: birthdayctl status | logs | doctor",
@@ -128,7 +129,7 @@ export const unknownCommand = (command: string) =>
 export const ship = {
   promptId: "ship-update",
   question: [
-    "Version 41 contains breaking changes and no migration guide. What should we do?",
+    "Version 40 contains breaking changes and no migration guide. What should we do?",
     "",
     "* Roll back",
     "* Postpone",
@@ -145,11 +146,11 @@ export const ship = {
 export const apply = {
   required: {
     package: "primeagen",
-    fromVersion: 40,
-    toVersion: 41,
+    fromVersion: 39,
+    toVersion: 40,
   },
   steps: [
-    { progress: 12, label: "Resolving primeagen@41.0" },
+    { progress: 12, label: "Resolving primeagen@40.0" },
     { progress: 28, label: "Fetching birthday index" },
     { progress: 41, label: "Unpacking breaking changes" },
     { progress: 63, label: "Rewriting muscle memory" },
@@ -158,35 +159,41 @@ export const apply = {
   ],
   warning: "Breaking changes detected",
   continuePromptId: "continue-update",
-  continueQuestion: "Breaking changes detected at 99%. Continue applying primeagen 41.0?",
+  continueQuestion:
+    "Breaking changes detected at 99%. Continue applying primeagen 40.0?",
   continueInstruction:
-    'Ask the human whether to continue. Ask Prime the returned question verbatim, then submit his answer with reply_to_stephanie.',
+    "Ask the human whether to continue. Ask Prime the returned question verbatim, then submit his answer with reply_to_stephanie.",
   continueUnclear: "Too late for rollback. Say continue, yes, or ship it.",
-  completeInstruction: "The final output is intended for the human. Ask Prime to read the website.",
+  completeInstruction:
+    "The final output is intended for the human. Ask Prime to read the website.",
 };
 
 export const updateErrors = {
-  wrongPackage: (pkg: string) => `Unknown package '${pkg}'. The only package here is primeagen.`,
-  wrongFrom: (from: number) => `Installed version is 40, not ${from}. Refusing to rewrite history.`,
-  wrongTo: (to: number) => `Refusing to install ${to}. This ritual requires 41.`,
-  wrongStage: "Update is not enabled yet. Investigate, then get Prime to ship it.",
+  wrongPackage: (pkg: string) =>
+    `Unknown package '${pkg}'. The only package here is primeagen.`,
+  wrongFrom: (from: number) =>
+    `Installed version is 39, not ${from}. Refusing to rewrite history.`,
+  wrongTo: (to: number) =>
+    `Refusing to install ${to}. This ritual requires 40.`,
+  wrongStage:
+    "Update is not enabled yet. Investigate, then get Prime to ship it.",
 };
 
 export const reveal = {
   banner: [
-    "PRIMEAGEN 41.0",
+    "PRIMEAGEN 40.0",
     "Installation successful",
     "Breaking changes: expected",
     "Support status: community maintained",
   ].join("\n"),
   letter: [
-    "Happy 41st birthday, Michael.",
+    "Happy 40th birthday, Prime.",
     "",
     "This is the third unnecessary birthday website I’ve made you, and somehow I’m still finding new ways to make you participate in them.",
     "",
-    "I hope 41 is a great one.",
+    "I hope 40 is a great one full of love, happiness and 2 more years of your wonderful mullet.",
     "",
-    "—Stephanie",
+    "— Stephanie",
   ].join("\n"),
   footer: "Plans for year four remain unsupported.",
 };
@@ -205,8 +212,10 @@ export const rebootMessages = [
 ];
 
 export const objectives = {
-  waiting: "Call start_game to boot the birthday experience in the human’s browser.",
-  intro: "The desktop is booting. Call inspect_screen, then identify the agent.",
+  waiting:
+    "Call start_game to boot the birthday experience in the human’s browser.",
+  intro:
+    "The desktop is booting. Call inspect_screen, then identify the agent.",
   identify_agent:
     'Call ask_prime with promptId "which-agent", ask Prime the question verbatim, then submit his answer with reply_to_stephanie.',
   diagnose:
@@ -214,10 +223,11 @@ export const objectives = {
   human_decision:
     'A major-version update is available. Call ask_prime with promptId "ship-update", ask Prime verbatim, then reply_to_stephanie.',
   apply_update:
-    'Call apply_update with package "primeagen", fromVersion 40, toVersion 41.',
+    'Call apply_update with package "primeagen", fromVersion 39, toVersion 40.',
   confirm_update:
     'The update is paused at 99%. Call ask_prime with promptId "continue-update", ask Prime verbatim, then reply_to_stephanie.',
-  complete: "The experience is complete. Ask Prime to read the website. Do not reveal the final message.",
+  complete:
+    "The experience is complete. Ask Prime to read the website. Do not reveal the final message.",
 } as const;
 
 export const toolDescriptions = {
@@ -236,9 +246,9 @@ export const toolDescriptions = {
   reply_to_stephanie:
     "Submit Prime’s actual response after asking him. Displays his exact words on the website and advances the authored story. Never invent his answer.",
   choose_action:
-    "Select one currently valid authored action (open-terminal, open-files, open-system-status, read-migration-log, run-doctor, run-status, apply-primeagen-41). Prefer the dedicated tools when you know them.",
+    "Select one currently valid authored action (open-terminal, open-files, open-system-status, read-migration-log, run-doctor, run-status, apply-primeagen-40). Prefer the dedicated tools when you know them.",
   apply_update:
-    "Apply the birthday package update. Only succeeds at the update stage with package primeagen, fromVersion 40, toVersion 41.",
+    "Apply the birthday package update. Only succeeds at the update stage with package primeagen, fromVersion 39, toVersion 40.",
   get_status:
     "Return the current stage, objective, completed steps, and whether the human must be consulted. Use when you need a compact briefing.",
   reset_game:
@@ -254,12 +264,12 @@ export const choices = {
   "read-readme": "Read /home/prime/README.md.",
   "run-doctor": "Run birthdayctl doctor.",
   "run-status": "Run birthdayctl status.",
-  "apply-primeagen-41": "Apply primeagen 40 → 41.",
+  "apply-primeagen-40": "Apply primeagen 39 → 40.",
 } as const;
 
 export const mcpConfigExample = (url: string) => ({
   mcpServers: {
-    "birthday-mcp": {
+    "primeagen-mcp": {
       url,
       transport: "http",
     },
@@ -267,4 +277,4 @@ export const mcpConfigExample = (url: string) => ({
 });
 
 export const inspectorHint =
-  "Test with MCP Inspector: npx @modelcontextprotocol/inspector and paste the session MCP URL. Point Inspector at the server port (default 8787), not a guessed client-specific setup. Remote HTTP MCP support varies by client; Inspector is the verified path for this prototype.";
+  "Paste http://127.0.0.1:8787/mcp once. Reset or create a new session on the website.";

@@ -32,7 +32,7 @@ npm run dev
 
 Open [http://127.0.0.1:8787](http://127.0.0.1:8787).
 
-The dev server serves the React app, the JSON API, WebSockets, and the session-specific MCP endpoint on **one port** (default `8787`).
+The dev server serves the React app, the JSON API, WebSockets, and a stable MCP endpoint on **one port** (default `8787`).
 
 Optional environment variables:
 
@@ -47,14 +47,14 @@ Optional environment variables:
 ## Play the experience
 
 1. Click **Create Session**.
-2. Copy the session-specific MCP URL and configuration.
+2. Copy the MCP config once (`http://127.0.0.1:8787/mcp`). Resetting the site does not change this URL.
 3. Keep the website open.
 4. Start a new conversation with an MCP-compatible agent and say: **Use the Birthday MCP and follow its instructions.**
 5. The agent must call `start_game` first. After that, every valid tool call updates the open browser.
 
 Connection state is shown in the top bar: Waiting for agent → Agent connected → Experience running → Complete.
 
-Refreshing the page restores the public session from `localStorage` plus a server snapshot. The MCP secret is kept in `sessionStorage` after setup and is never written to `console.log`.
+Refreshing the page restores the public session from `localStorage` plus a server snapshot.
 
 ## Connect an MCP client
 
@@ -68,10 +68,10 @@ This prototype is verified against Inspector v2:
 npx @modelcontextprotocol/inspector@latest
 ```
 
-Paste the session MCP URL from the website, for example:
+Paste the MCP URL from the website:
 
 ```text
-http://127.0.0.1:8787/mcp/<secret-token>
+http://127.0.0.1:8787/mcp
 ```
 
 Transport: Streamable HTTP.
@@ -81,9 +81,9 @@ Then call `start_game`. The open website should boot the simulated desktop.
 CLI check without the UI:
 
 ```bash
-npx @modelcontextprotocol/inspector@latest --cli --transport http --server-url http://127.0.0.1:8787/mcp/<secret-token> --method tools/list
+npx @modelcontextprotocol/inspector@latest --cli --transport http --server-url http://127.0.0.1:8787/mcp --method tools/list
 
-npx @modelcontextprotocol/inspector@latest --cli --transport http --server-url http://127.0.0.1:8787/mcp/<secret-token> --method tools/call --tool-name start_game
+npx @modelcontextprotocol/inspector@latest --cli --transport http --server-url http://127.0.0.1:8787/mcp --method tools/call --tool-name start_game
 ```
 
 `npx @modelcontextprotocol/inspector` without `@latest` may still resolve to the deprecated v1 Inspector. Use `@latest` (v2) with this server.
@@ -96,16 +96,16 @@ The website shows a copyable example of the form:
 {
   "mcpServers": {
     "birthday-mcp": {
-      "url": "http://127.0.0.1:8787/mcp/<secret-token>",
+      "url": "http://127.0.0.1:8787/mcp",
       "transport": "http"
     }
   }
 }
 ```
 
-Cursor, Claude Desktop, Codex, and others historically prefer stdio servers. Remote Streamable HTTP support is client-specific and still uneven. If a client cannot attach to an HTTP MCP URL, use MCP Inspector against the generated endpoint. That path is what this prototype verifies.
+Cursor, Claude Desktop, Codex, and others historically prefer stdio servers. Remote Streamable HTTP support is client-specific and still uneven. If a client cannot attach to an HTTP MCP URL, use MCP Inspector against `http://127.0.0.1:8787/mcp`. That path is what this prototype verifies.
 
-The session code (`PRIME-XXXX`) is a human label, not a credential. Authorization is the high-entropy token in the MCP URL.
+The session code (`PRIME-XXXX`) is a human label. MCP always targets the live website session, so you can reset or create a new session without changing client config.
 
 ## Development panel
 

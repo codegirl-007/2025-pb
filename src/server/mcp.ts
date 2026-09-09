@@ -9,7 +9,7 @@ import { RateLimiter } from "./rateLimit";
 import type { ServerConfig } from "./config";
 import type { SessionStore } from "./store";
 
-const mcpAls = new AsyncLocalStorage<{ token: string }>();
+const mcpAls = new AsyncLocalStorage<{ token?: string; live?: boolean }>();
 
 function jsonResult(payload: unknown, isError = false) {
   return {
@@ -22,21 +22,24 @@ function createBirthdayServer(store: SessionStore, limiter: RateLimiter, config:
   const server = new McpServer(
     {
       name: "birthday-mcp",
-      version: "41.0.0",
+      version: "40.0.0",
       title: "The Birthday MCP",
     },
     { instructions: mcpInstructions },
   );
 
   const run = (name: ToolName, args: unknown) => {
-    const token = mcpAls.getStore()?.token;
-    if (!token) {
+    const scope = mcpAls.getStore();
+    if (!scope) {
       return jsonResult({ status: "error", error: "Missing session token." }, true);
     }
-    if (!limiter.allow(`mcp:${token}`, config.mcpCallLimit, config.mcpCallWindowMs)) {
+    const limitKey = scope.live ? "mcp:live" : `mcp:${scope.token}`;
+    if (!limiter.allow(limitKey, config.mcpCallLimit, config.mcpCallWindowMs)) {
       return jsonResult({ status: "error", error: "Rate limited. Wait a moment and continue." }, true);
     }
-    const result = store.dispatchByToken(token, name, args);
+    const result = scope.live
+      ? store.dispatchLive(name, args)
+      : store.dispatchByToken(scope.token ?? "", name, args);
     if (!("mcp" in result)) {
       return jsonResult({ status: "error", error: result.error }, true);
     }
@@ -100,6 +103,12 @@ export function mountMcp(app: Express, store: SessionStore, limiter: RateLimiter
     { responseMode: "json" },
   );
   const node = toNodeHandler(handler);
+
+  const handleLive = (req: Request, res: Response) => {
+    void mcpAls.run({ live: true }, () => node(req, res, req.body));
+  };
+  app.all("/mcp", handleLive);
+  app.all("/mcp/", handleLive);
 
   app.all("/mcp/:token", (req: Request, res: Response) => {
     const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;

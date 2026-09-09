@@ -12,7 +12,15 @@ attachWebSocket(server, store);
 if (!config.isProduction) {
   const { createServer: createViteServer } = await import("vite");
   const vite = await createViteServer({
-    server: { middlewareMode: true, hmr: { server } },
+    server: {
+      middlewareMode: true,
+      hmr: {
+        server,
+        path: "/vite-hmr",
+        port: config.port,
+        clientPort: config.port,
+      },
+    },
     appType: "spa",
   });
   app.use(vite.middlewares);

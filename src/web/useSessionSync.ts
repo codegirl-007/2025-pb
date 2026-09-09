@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import type { PublicSession, SessionEvent, WsServerMessage } from "../shared/types";
-import { fetchSnapshot } from "./api";
+import { HttpError, fetchSnapshot } from "./api";
 
-export function useSessionSync(sessionId: string | null) {
+export function useSessionSync(sessionId: string | null, onMissing?: () => void) {
   const [snapshot, setSnapshot] = useState<PublicSession | null>(null);
   const [events, setEvents] = useState<SessionEvent[]>([]);
   const [connected, setConnected] = useState(false);
   const versionRef = useRef(0);
+  const onMissingRef = useRef(onMissing);
+  onMissingRef.current = onMissing;
 
   useEffect(() => {
     if (!sessionId) {
+      setSnapshot(null);
+      setEvents([]);
       return;
     }
     versionRef.current = 0;
@@ -18,6 +22,13 @@ export function useSessionSync(sessionId: string | null) {
     let ws: WebSocket | null = null;
     let retry = 0;
     let timer: number | undefined;
+
+    const missing = () => {
+      closed = true;
+      setConnected(false);
+      setSnapshot(null);
+      onMissingRef.current?.();
+    };
 
     const applySnapshot = (next: PublicSession) => {
       if (next.stateVersion < versionRef.current) return;
@@ -30,19 +41,28 @@ export function useSessionSync(sessionId: string | null) {
         const latest = await fetchSnapshot(sessionId);
         if (closed) return;
         applySnapshot(latest);
-      } catch {
+      } catch (err) {
         if (closed) return;
+        if (err instanceof HttpError && err.status === 404) {
+          missing();
+          return;
+        }
       }
 
+      if (closed) return;
       const protocol = location.protocol === "https:" ? "wss" : "ws";
       ws = new WebSocket(`${protocol}://${location.host}/ws?sessionId=${encodeURIComponent(sessionId)}`);
       ws.onopen = () => {
         retry = 0;
         setConnected(true);
       };
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         setConnected(false);
         if (closed) return;
+        if (event.code === 4404) {
+          missing();
+          return;
+        }
         retry += 1;
         timer = window.setTimeout(connect, Math.min(8000, 400 * 2 ** retry));
       };

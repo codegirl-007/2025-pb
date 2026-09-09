@@ -37,8 +37,8 @@ describe("end-to-end birthday flow over MCP", () => {
 
       const applied = await textResult(client, "apply_update", {
         package: "primeagen",
-        fromVersion: 40,
-        toVersion: 41,
+        fromVersion: 39,
+        toVersion: 40,
       });
       expect(applied.pausedAt).toBe(99);
       await textResult(client, "ask_prime", { promptId: "continue-update" });
@@ -47,7 +47,7 @@ describe("end-to-end birthday flow over MCP", () => {
         message: "continue",
       });
       expect(done.status).toBe("complete");
-      expect(JSON.stringify(done)).not.toContain("Happy 41st birthday");
+      expect(JSON.stringify(done)).not.toContain("Happy 40th birthday");
 
       const snap = await request(app).get(`/api/sessions/${created.body.sessionId}`).expect(200);
       expect(snap.body.complete).toBe(true);

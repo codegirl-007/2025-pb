@@ -1,75 +1,65 @@
-import { useEffect, useState } from "react";
 import { connectionLabels } from "../../content/index";
-import type { PublicSession, WindowState } from "../../shared/types";
+import type { PublicSession } from "../../shared/types";
 
 export function ConnectionLabel({ state }: { state: string }) {
   return <span className={`status-pill ${state}`}>{connectionLabels[state] ?? state}</span>;
 }
 
+export function focusedWindowTitle(snapshot: PublicSession | null) {
+  if (!snapshot || snapshot.stage === "waiting") return "terminal";
+  const focused = snapshot.visual.windows.find((win) => win.open && win.focused);
+  if (focused?.title) return focused.title;
+  if (snapshot.stage === "complete") return "primeagen 40.0";
+  return "terminal";
+}
+
 export function TopBar({ snapshot, clock }: { snapshot: PublicSession | null; clock: string }) {
   const state = snapshot?.connectionState ?? "waiting_for_agent";
   return (
-    <header className="topbar">
-      <div className="workspaces">
-        <span className="active">1</span>
-        <span>2</span>
-        <span>3</span>
-        <span>birthday</span>
+    <header className="waybar">
+      <div className="waybar-left">
+        <span className="ws active">1</span>
+        <span className="ws">2</span>
+        <span className="ws">3</span>
       </div>
-      <div className="top-status">
-        <span>{snapshot?.sessionCode ?? "NO-SESSION"}</span>
-        <span>mcp {snapshot?.connectionState === "waiting_for_agent" ? "idle" : "up"}</span>
-        <span>{clock}</span>
+      <div className="waybar-center">{focusedWindowTitle(snapshot)}</div>
+      <div className="waybar-right">
+        <span>{snapshot?.sessionCode ?? "no session"}</span>
         <ConnectionLabel state={state} />
+        <span className="waybar-clock">{clock}</span>
       </div>
     </header>
   );
 }
 
-export function WindowFrame({ win, children }: { win: WindowState; children: React.ReactNode }) {
+export function ArchWallpaper() {
   return (
-    <section className={`window ${win.focused ? "focused" : ""}`} data-target={win.id}>
-      <div className="window-title">
-        <div className="dots">
-          <span />
-          <span />
-          <span />
-        </div>
-        {win.title}
-      </div>
-      <div className={`window-body ${win.app === "terminal" ? "terminal" : ""}`}>{children}</div>
-    </section>
+    <svg className="arch-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M32 4 L58 54 H44 L32 28 L20 54 H6 Z" />
+    </svg>
   );
 }
 
-export function TerminalView({
-  lines,
-  reducedMotion,
+export function OsWindow({
+  title,
+  host = "",
+  children,
+  className = "",
+  target,
 }: {
-  lines: PublicSession["visual"]["terminalLines"];
-  reducedMotion: boolean;
+  title: string;
+  host?: string;
+  children: React.ReactNode;
+  className?: string;
+  target?: string;
 }) {
   return (
-    <div>
-      {lines.map((line) => (
-        <div key={line.id} className={`term-line ${line.kind}`}>
-          {reducedMotion ? line.text : <TypedText text={line.text} />}
-        </div>
-      ))}
-    </div>
+    <section className={`os-window ${className}`} data-target={target}>
+      <header className="os-titlebar">
+        <span className="os-title">{title}</span>
+        <span className="os-host">{host}</span>
+      </header>
+      <div className="os-body">{children}</div>
+    </section>
   );
-}
-
-function TypedText({ text }: { text: string }) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    let i = 0;
-    const id = window.setInterval(() => {
-      i += Math.max(1, Math.ceil(text.length / 48));
-      setCount(Math.min(text.length, i));
-      if (i >= text.length) window.clearInterval(id);
-    }, 16);
-    return () => window.clearInterval(id);
-  }, [text]);
-  return <>{text.slice(0, count)}</>;
 }

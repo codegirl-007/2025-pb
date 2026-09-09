@@ -5,7 +5,8 @@ import { createSession, resetSession } from "./api";
 import { Desktop } from "./components/Desktop";
 import { DevPanel } from "./components/DevPanel";
 import { SetupScreen } from "./components/SetupScreen";
-import { TopBar } from "./components/chrome";
+import { ArchWallpaper, OsWindow, TopBar } from "./components/chrome";
+import { previewCreated, previewSnapshot, type PreviewSceneId } from "./previewScenes";
 import { clearStoredSession, loadStoredSession, storeCreatedSession, type StoredSession } from "./sessionStore";
 import { playTone } from "./sound";
 import { useSessionSync } from "./useSessionSync";
@@ -21,14 +22,14 @@ function useReducedMotion() {
   return reduced;
 }
 
-function toCreated(stored: StoredSession): CreateSessionResponse | null {
-  if (!stored.mcpUrl) return null;
+function toCreated(stored: StoredSession): CreateSessionResponse {
+  const mcpUrl = stored.mcpUrl ?? `${window.location.origin}/mcp`;
   return {
     sessionId: stored.sessionId,
     sessionCode: stored.sessionCode,
-    mcpUrl: stored.mcpUrl,
+    mcpUrl,
     mcpConfig: stored.mcpConfig ?? {
-      mcpServers: { "birthday-mcp": { url: stored.mcpUrl, transport: "http" } },
+      mcpServers: { "birthday-mcp": { url: mcpUrl, transport: "http" } },
     },
     prompt: stored.prompt ?? landing.prompt,
     inspectorHint: stored.inspectorHint ?? "",
@@ -49,10 +50,16 @@ export function App() {
   const [forceReduced, setForceReduced] = useState(false);
   const reducedMotion = reducedMotionPref || forceReduced;
   const [clock, setClock] = useState(() => new Date().toLocaleTimeString());
+  const [preview, setPreview] = useState<{ id: PreviewSceneId; stamp: number } | null>(null);
   const devMode = useMemo(() => new URLSearchParams(location.search).get("dev") === "1" && import.meta.env.DEV, []);
 
   const sessionId = stored?.sessionId ?? null;
-  const { snapshot, events, connected } = useSessionSync(sessionId);
+  const { snapshot, events, connected } = useSessionSync(sessionId, () => {
+    clearStoredSession();
+    setStored(null);
+    setCreated(null);
+    setError("That session is gone. The server likely restarted — create a new session.");
+  });
 
   useEffect(() => {
     const id = window.setInterval(() => setClock(new Date().toLocaleTimeString()), 1000);
@@ -65,70 +72,93 @@ export function App() {
   }, [lastNotificationId, sound]);
 
   const connectionState = snapshot?.connectionState ?? "waiting_for_agent";
-  const showDesktop = snapshot && snapshot.stage !== "waiting";
+  const previewView = preview ? previewSnapshot(preview.id, preview.stamp) : null;
+  const view = previewView ?? snapshot;
+  const showDesktop = preview
+    ? preview.id !== "setup"
+    : Boolean(snapshot && snapshot.stage !== "waiting");
+  const setupCreated = created ?? (preview?.id === "setup" ? previewCreated() : null);
 
   return (
     <div className="app" data-contrast={highContrast ? "high" : "normal"}>
-      <TopBar snapshot={snapshot} clock={clock} />
-      {showDesktop ? (
-        <Desktop snapshot={snapshot} reducedMotion={reducedMotion} />
+      <TopBar snapshot={view} clock={clock} />
+      {showDesktop && view ? (
+        <Desktop snapshot={view} reducedMotion={reducedMotion} previewScene={preview?.id} />
       ) : (
-        <SetupScreen
-          created={created}
-          connectionState={connectionState}
-          busy={busy}
-          error={error}
-          onCreate={() => {
-            void (async () => {
-              try {
-                setBusy(true);
-                setError(null);
-                const next = await createSession();
-                storeCreatedSession(next);
-                setCreated(next);
-                setStored({
-                  sessionId: next.sessionId,
-                  sessionCode: next.sessionCode,
-                  mcpUrl: next.mcpUrl,
-                  prompt: next.prompt,
-                  inspectorHint: next.inspectorHint,
-                });
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Could not create session.");
-              } finally {
-                setBusy(false);
-              }
-            })();
-          }}
-        />
+        <main className="os-desktop">
+          <ArchWallpaper />
+          <OsWindow title="terminal">
+            <SetupScreen
+              created={setupCreated}
+              connectionState={connectionState}
+              busy={busy}
+              error={error}
+              onCreate={() => {
+                void (async () => {
+                  try {
+                    setBusy(true);
+                    setError(null);
+                    const next = await createSession();
+                    storeCreatedSession(next);
+                    setCreated(next);
+                    setStored({
+                      sessionId: next.sessionId,
+                      sessionCode: next.sessionCode,
+                      mcpUrl: next.mcpUrl,
+                      prompt: next.prompt,
+                      inspectorHint: next.inspectorHint,
+                    });
+                    setPreview(null);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Could not create session.");
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }}
+            />
+          </OsWindow>
+        </main>
       )}
-      <div className="controls">
-        <span>ws {connected ? "live" : "reconnecting"}</span>
-        <button onClick={() => location.reload()}>Reconnect</button>
-        <button
-          onClick={() => {
-            if (!sessionId) return;
-            void resetSession(sessionId).then(() => {
-              /* snapshot arrives over websocket */
-            });
-          }}
-        >
-          Reset
-        </button>
-        <button onClick={() => setSound((v) => !v)}>{sound ? "Sound on" : "Sound off"}</button>
-        <button onClick={() => setForceReduced((v) => !v)}>{reducedMotion ? "Motion off" : "Motion on"}</button>
-        <button onClick={() => setHighContrast((v) => !v)}>{highContrast ? "Contrast high" : "Contrast"}</button>
-        <button
-          onClick={() => {
-            clearStoredSession();
-            setStored(null);
-            setCreated(null);
-          }}
-        >
-          New browser session
-        </button>
-      </div>
-      {devMode && sessionId ? <DevPanel sessionId={sessionId} snapshot={snapshot} events={events} /> : null}
+      <details className="controls">
+        <summary>
+          session options{sessionId ? ` · ws ${connected ? "live" : "reconnecting"}` : ""}
+        </summary>
+        <div className="row">
+          <button onClick={() => location.reload()}>Reconnect</button>
+          <button
+            onClick={() => {
+              if (!sessionId) return;
+              void resetSession(sessionId).then(() => {
+                /* snapshot arrives over websocket */
+              });
+            }}
+          >
+            Reset
+          </button>
+          <button onClick={() => setSound((v) => !v)}>{sound ? "Sound on" : "Sound off"}</button>
+          <button onClick={() => setForceReduced((v) => !v)}>{reducedMotion ? "Motion off" : "Motion on"}</button>
+          <button onClick={() => setHighContrast((v) => !v)}>{highContrast ? "Contrast high" : "Contrast"}</button>
+          <button
+            onClick={() => {
+              clearStoredSession();
+              setStored(null);
+              setCreated(null);
+            }}
+          >
+            New browser session
+          </button>
+        </div>
+      </details>
+      {devMode ? (
+        <DevPanel
+          sessionId={sessionId}
+          snapshot={view}
+          events={events}
+          preview={preview?.id ?? null}
+          onPreview={(id) => setPreview(id ? { id, stamp: Date.now() } : null)}
+        />
+      ) : null}
     </div>
   );
 }

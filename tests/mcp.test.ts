@@ -27,9 +27,11 @@ describe("MCP transport", () => {
     return { client, transport };
   }
 
-  it("registers every tool and isolates tokens", async () => {
+  it("registers every tool and drives the live session", async () => {
     const created = await request(app).post("/api/sessions").expect(201);
     const other = await request(app).post("/api/sessions").expect(201);
+    expect(created.body.mcpUrl).toMatch(/\/mcp$/);
+    expect(created.body.mcpUrl).toBe(other.body.mcpUrl);
     const { client } = await connect(created.body.mcpUrl);
     try {
       const listed = await client.listTools();
@@ -37,6 +39,40 @@ describe("MCP transport", () => {
       expect(names).toEqual([...TOOL_NAMES].sort());
       expect(listed.tools.find((tool) => tool.name === "start_game")?.description).toContain("Call this first");
 
+      await client.callTool({ name: "start_game" });
+      expect(store.getById(other.body.sessionId)?.stage).toBe("identify_agent");
+      expect(store.getById(created.body.sessionId)?.stage).toBe("waiting");
+    } finally {
+      await client.close();
+    }
+  });
+
+  it("keeps the same MCP URL after reset", async () => {
+    const created = await request(app).post("/api/sessions").expect(201);
+    const { client } = await connect(created.body.mcpUrl);
+    try {
+      await client.callTool({ name: "start_game" });
+      expect(store.getById(created.body.sessionId)?.stage).toBe("identify_agent");
+
+      await request(app)
+        .post(`/api/sessions/${created.body.sessionId}/reset`)
+        .send({ confirm: true })
+        .expect(200);
+      expect(store.getById(created.body.sessionId)?.stage).toBe("waiting");
+
+      await client.callTool({ name: "start_game" });
+      expect(store.getById(created.body.sessionId)?.stage).toBe("identify_agent");
+    } finally {
+      await client.close();
+    }
+  });
+
+  it("follows whichever session the website claims", async () => {
+    const created = await request(app).post("/api/sessions").expect(201);
+    const other = await request(app).post("/api/sessions").expect(201);
+    expect(store.claim(created.body.sessionId)?.sessionId).toBe(created.body.sessionId);
+    const { client } = await connect(created.body.mcpUrl);
+    try {
       await client.callTool({ name: "start_game" });
       expect(store.getById(created.body.sessionId)?.stage).toBe("identify_agent");
       expect(store.getById(other.body.sessionId)?.stage).toBe("waiting");

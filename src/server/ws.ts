@@ -1,4 +1,5 @@
 import type { IncomingMessage, Server } from "node:http";
+import type { Duplex } from "node:stream";
 import { WebSocketServer, type WebSocket } from "ws";
 import type { PublicSession, SessionEvent, WsServerMessage } from "../shared/types";
 import type { SessionStore } from "./store";
@@ -10,7 +11,15 @@ function send(ws: WebSocket, message: WsServerMessage) {
 }
 
 export function attachWebSocket(server: Server, store: SessionStore) {
-  const wss = new WebSocketServer({ server, path: "/ws" });
+  const wss = new WebSocketServer({ noServer: true });
+
+  server.on("upgrade", (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+    const pathname = new URL(request.url ?? "/", "http://127.0.0.1").pathname;
+    if (pathname !== "/ws") return;
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+  });
 
   wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
     const url = new URL(req.url ?? "/ws", "http://127.0.0.1");
@@ -27,6 +36,7 @@ export function attachWebSocket(server: Server, store: SessionStore) {
       return;
     }
 
+    store.claim(sessionId);
     send(ws, { type: "snapshot", snapshot });
     const unsubscribe = store.subscribe(sessionId, (event: SessionEvent, next: PublicSession) => {
       send(ws, { type: "event", event, snapshot: next });

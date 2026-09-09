@@ -30,7 +30,7 @@ describe("state progression", () => {
   it("rejects out-of-order calls", () => {
     const waiting = session();
     expect(handleTool(waiting, "open_app", { app: "terminal" }).ok).toBe(false);
-    expect(handleTool(waiting, "apply_update", { package: "primeagen", fromVersion: 40, toVersion: 41 }).ok).toBe(false);
+    expect(handleTool(waiting, "apply_update", { package: "primeagen", fromVersion: 39, toVersion: 40 }).ok).toBe(false);
     const started = handleTool(waiting, "start_game", {}).state;
     expect(handleTool(started, "read_file", { path: "/var/log/birthday-migration.log" }).ok).toBe(false);
     expect(handleTool(started, "run_command", { command: "birthdayctl status" }).ok).toBe(false);
@@ -67,25 +67,25 @@ describe("state progression", () => {
     expect(shipped.mcp.stephanie).toBe(ship.ship);
     expect(shipped.state.stage).toBe("apply_update");
 
-    const badPkg = handleTool(shipped.state, "apply_update", { package: "vim", fromVersion: 40, toVersion: 41 });
+    const badPkg = handleTool(shipped.state, "apply_update", { package: "vim", fromVersion: 39, toVersion: 40 });
     expect(badPkg.ok).toBe(false);
-    const badFrom = handleTool(shipped.state, "apply_update", { package: "primeagen", fromVersion: 39, toVersion: 41 });
+    const badFrom = handleTool(shipped.state, "apply_update", { package: "primeagen", fromVersion: 40, toVersion: 40 });
     expect(badFrom.ok).toBe(false);
-    const badTo = handleTool(shipped.state, "apply_update", { package: "primeagen", fromVersion: 40, toVersion: 42 });
+    const badTo = handleTool(shipped.state, "apply_update", { package: "primeagen", fromVersion: 39, toVersion: 41 });
     expect(badTo.ok).toBe(false);
     expect(badTo.state.stage).toBe("apply_update");
 
     const applied = handleTool(shipped.state, "apply_update", {
       package: apply.required.package,
-      fromVersion: 40,
-      toVersion: 41,
+      fromVersion: 39,
+      toVersion: 40,
     });
     expect(applied.ok).toBe(true);
     expect(applied.state.stage).toBe("confirm_update");
     expect(applied.state.visual.update.progress).toBe(99);
     expect(applied.mcp.instruction).toContain("Ask the human whether to continue");
 
-    const replay = handleTool(applied.state, "apply_update", { package: "primeagen", fromVersion: 40, toVersion: 41 });
+    const replay = handleTool(applied.state, "apply_update", { package: "primeagen", fromVersion: 39, toVersion: 40 });
     expect(replay.ok).toBe(false);
 
     state = handleTool(applied.state, "ask_prime", { promptId: "continue-update" }).state;
@@ -93,7 +93,7 @@ describe("state progression", () => {
     expect(done.ok).toBe(true);
     expect(done.state.complete).toBe(true);
     expect(done.mcp.status).toBe("complete");
-    expect(JSON.stringify(done.mcp)).not.toContain("Happy 41st birthday");
+    expect(JSON.stringify(done.mcp)).not.toContain("Happy 40th birthday");
     expect(done.mcp.instruction).toContain("Ask Prime to read the website");
   });
 

@@ -1,9 +1,9 @@
 {
   "name": "birthday-mcp",
-  "version": "41.0.0",
+  "version": "40.0.0",
   "private": true,
   "type": "module",
-  "description": "The Birthday MCP — a deterministic human/AI interactive experience for ThePrimeagen’s 41st birthday.",
+  "description": "The Birthday MCP — a deterministic human/AI interactive experience for ThePrimeagen’s 40th birthday.",
   "engines": {
     "node": ">=20"
   },

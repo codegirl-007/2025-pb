@@ -380,7 +380,7 @@ function handleOpenApp(state: SessionState, app: AppId, now: Date): EngineResult
   state.visual.cursorTarget = ids[app];
   if (app === "system_status") state.investigation.openedSystemStatus = true;
   if (app === "terminal" && state.visual.terminalLines.length === 0) {
-    addTerminal(state, "system", "birthdaysh 41.0 (simulated). Type is controlled by the agent.");
+    addTerminal(state, "system", "birthdaysh 40.0 (simulated). Type is controlled by the agent.");
   }
   maybeUnlockDecision(state, now);
   const event = pushEvent(state, "window_open", { app, id: ids[app] }, now);
@@ -596,7 +596,7 @@ function finishUpdate(state: SessionState, now: Date, events: SessionEvent[]) {
   events.push(pushEvent(state, "update_progress", { progress: 100 }, now));
   events.push(pushEvent(state, "reboot", { messages: rebootMessages }, now));
   state.visual.wallpaper = "reveal";
-  upsertWindow(state, { id: "reveal", app: "reveal", title: "primeagen 41.0" });
+  upsertWindow(state, { id: "reveal", app: "reveal", title: "primeagen 40.0" });
   state.visual.cursorTarget = "reveal";
   state.pendingPromptId = null;
   state.completedAt = now.toISOString();
@@ -679,8 +679,8 @@ function handleChooseAction(state: SessionState, choiceId: string, now: Date): E
       return handleRunCommand(state, "birthdayctl doctor", now);
     case "run-status":
       return handleRunCommand(state, "birthdayctl status", now);
-    case "apply-primeagen-41":
-      return handleApplyUpdate(state, { package: "primeagen", fromVersion: 40, toVersion: 41 }, now);
+    case "apply-primeagen-40":
+      return handleApplyUpdate(state, { ...apply.required }, now);
     default:
       return errorResult(state, "choose_action", `Unknown or unavailable choiceId '${choiceId}'.`, now);
   }
@@ -794,7 +794,7 @@ export function sessionSummary(state: SessionState, now = new Date()): {
     invalidCalls: state.stats.invalidCalls,
     humanInterventions: state.stats.humanInterventions,
     messagesExchanged: state.stats.messagesExchanged,
-    updateResult: state.complete ? "primeagen 40 → 41" : "not applied",
+    updateResult: state.complete ? `primeagen ${apply.required.fromVersion} → ${apply.required.toVersion}` : "not applied",
     elapsedMs: Math.max(0, end - start),
   };
 }

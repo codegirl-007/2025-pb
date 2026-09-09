@@ -8,6 +8,7 @@ export class SessionStore {
   private byCode = new Map<string, string>();
   private byToken = new Map<string, string>();
   private listeners = new Map<string, Set<Listener>>();
+  private liveId: string | undefined;
 
   constructor(
     private readonly ttlMs: number,
@@ -19,7 +20,19 @@ export class SessionStore {
     this.sessions.set(state.sessionId, state);
     this.byCode.set(state.sessionCode, state.sessionId);
     this.byToken.set(state.secretToken, state.sessionId);
+    this.liveId = state.sessionId;
     return state;
+  }
+
+  claim(sessionId: string): SessionState | undefined {
+    const state = this.getById(sessionId);
+    if (!state) return undefined;
+    this.liveId = sessionId;
+    return state;
+  }
+
+  getLive(): SessionState | undefined {
+    return this.liveId ? this.getById(this.liveId) : undefined;
   }
 
   getById(id: string): SessionState | undefined {
@@ -50,6 +63,12 @@ export class SessionStore {
   dispatchById(sessionId: string, tool: ToolName, args: unknown): EngineResult | { ok: false; error: string } {
     const state = this.getById(sessionId);
     if (!state) return { ok: false, error: "Unknown session." };
+    return this.apply(state, tool, args);
+  }
+
+  dispatchLive(tool: ToolName, args: unknown): EngineResult | { ok: false; error: string } {
+    const state = this.getLive();
+    if (!state) return { ok: false, error: "No live session. Create one on the website." };
     return this.apply(state, tool, args);
   }
 
@@ -109,5 +128,6 @@ export class SessionStore {
     this.byCode.delete(state.sessionCode);
     this.byToken.delete(state.secretToken);
     this.listeners.delete(state.sessionId);
+    if (this.liveId === state.sessionId) this.liveId = undefined;
   }
 }

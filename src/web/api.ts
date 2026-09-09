@@ -1,9 +1,18 @@
 import type { CreateSessionResponse, PublicSession, ToolName } from "../shared/types";
 
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "HttpError";
+    this.status = status;
+  }
+}
+
 async function parseJson<T>(res: Response): Promise<T> {
   const data = (await res.json()) as T & { error?: string };
   if (!res.ok) {
-    throw new Error(data.error ?? `Request failed (${res.status})`);
+    throw new HttpError(res.status, data.error ?? `Request failed (${res.status})`);
   }
   return data;
 }

@@ -28,8 +28,8 @@ export async function listenApp(overrides: Partial<ServerConfig> = {}) {
   return { server, store, baseUrl: config.publicUrl, port, app };
 }
 
-export function playthrough(store: SessionStore, token: string, agent = "cursor") {
-  const call = (tool: ToolName, args: unknown = {}) => store.dispatchByToken(token, tool, args);
+export function playthrough(store: SessionStore, sessionId: string, agent = "cursor") {
+  const call = (tool: ToolName, args: unknown = {}) => store.dispatchById(sessionId, tool, args);
   call("start_game");
   call("ask_prime", { promptId: "which-agent" });
   call("reply_to_stephanie", { promptId: "which-agent", message: agent });
@@ -37,7 +37,7 @@ export function playthrough(store: SessionStore, token: string, agent = "cursor"
   call("run_command", { command: "birthdayctl doctor" });
   call("ask_prime", { promptId: "ship-update" });
   call("reply_to_stephanie", { promptId: "ship-update", message: "ship it" });
-  call("apply_update", { package: "primeagen", fromVersion: 40, toVersion: 41 });
+  call("apply_update", { package: "primeagen", fromVersion: 39, toVersion: 40 });
   call("ask_prime", { promptId: "continue-update" });
   return call("reply_to_stephanie", { promptId: "continue-update", message: "yes" });
 }

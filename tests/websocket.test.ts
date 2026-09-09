@@ -39,8 +39,7 @@ describe("websocket isolation", () => {
         if (msg.event?.sessionId === a.body.sessionId) leaked = true;
       });
 
-      const tokenA = new URL(a.body.mcpUrl).pathname.split("/").pop()!;
-      store.dispatchByToken(tokenA, "start_game", {});
+      store.dispatchById(a.body.sessionId, "start_game", {});
       const eventA = await nextA;
       expect(eventA.snapshot?.sessionId).toBe(a.body.sessionId);
       expect(leaked).toBe(false);
@@ -52,6 +51,7 @@ describe("websocket isolation", () => {
       const recovered = await waitFor(wsA2, (msg) => msg.type === "snapshot");
       expect(recovered.snapshot?.stage).toBe("identify_agent");
       expect(recovered.snapshot?.stateVersion).toBeGreaterThan(0);
+      expect(store.getLive()?.sessionId).toBe(a.body.sessionId);
       wsA2.close();
       wsB.close();
     } finally {

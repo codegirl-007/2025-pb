@@ -52,7 +52,7 @@ export function createApp(config: ServerConfig, store = new SessionStore(config.
       return;
     }
     const session = store.create();
-    const mcpUrl = `${config.publicUrl}/mcp/${session.secretToken}`;
+    const mcpUrl = `${config.publicUrl}/mcp`;
     res.status(201).json({
       sessionId: session.sessionId,
       sessionCode: session.sessionCode,
