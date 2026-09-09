@@ -180,12 +180,7 @@ export const updateErrors = {
 };
 
 export const reveal = {
-  banner: [
-    "PRIMEAGEN 40.0",
-    "Installation successful",
-    "Breaking changes: expected",
-    "Support status: community maintained",
-  ].join("\n"),
+  banner: ["PRIMEAGEN 40.0", "Installation successful"].join("\n"),
   letter: [
     "Happy 40th birthday, Prime.",
     "",
