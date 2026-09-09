@@ -37,13 +37,10 @@ function CreatedDetails({ created }: { created: CreateSessionResponse }) {
   return (
     <ol className="setup-steps">
       <li>
-        <p>Session is live. Keep this tab open.</p>
-        <p>
-          Code <strong>{created.sessionCode}</strong>
-        </p>
-      </li>
+        <p>Session is live. Keep this tab open. Would help to have your terminal and browser side by side.</p>
+              </li>
       <li>
-        <p>Paste this MCP config into Cursor. Reset Game keeps this URL. Disconnect invalidates it.</p>
+        <p>Set up the MCP server. Alternatively, you can ask your agent to do it. May new to restart the agent after setup.</p>
         <pre className="codebox">{config}</pre>
         <div className="row">
           <button className="primary" onClick={() => void copy(config)}>
