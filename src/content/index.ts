@@ -276,5 +276,5 @@ export const mcpConfigExample = (url: string) => ({
   },
 });
 
-export const inspectorHint =
-  "Paste http://127.0.0.1:8787/mcp once. Reset or create a new session on the website.";
+export const inspectorHint = (url: string) =>
+  `Paste ${url} once. Reset or create a new session on the website.`;

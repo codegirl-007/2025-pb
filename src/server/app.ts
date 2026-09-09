@@ -34,8 +34,8 @@ function publicSnapshot(store: SessionStore, sessionId: string) {
 export function createApp(config: ServerConfig, store = new SessionStore(config.sessionTtlMs)) {
   const app = createMcpExpressApp({
     host: config.host,
-    allowedHosts: ["127.0.0.1", "localhost", "[::1]"],
-    allowedOrigins: ["127.0.0.1", "localhost", "[::1]"],
+    allowedHosts: config.allowedHosts,
+    allowedOrigins: config.allowedHosts,
     jsonLimit: "1mb",
   });
   const limiter = new RateLimiter();
@@ -59,7 +59,7 @@ export function createApp(config: ServerConfig, store = new SessionStore(config.
       mcpUrl,
       mcpConfig: mcpConfigExample(mcpUrl),
       prompt: landing.prompt,
-      inspectorHint,
+      inspectorHint: inspectorHint(mcpUrl),
     });
   });
 

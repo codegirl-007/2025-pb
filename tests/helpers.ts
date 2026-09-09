@@ -1,17 +1,21 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { loadConfig, type ServerConfig } from "../src/server/config";
+import { allowedHostnames, loadConfig, type ServerConfig } from "../src/server/config";
 import { createApp } from "../src/server/app";
 import { attachWebSocket } from "../src/server/ws";
 import { SessionStore } from "../src/server/store";
 import type { ToolName } from "../src/shared/types";
 
 export function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig {
-  return {
+  const base = {
     ...loadConfig({ NODE_ENV: "test", HOST: "127.0.0.1", PORT: "0" }),
     isProduction: true,
     publicUrl: "http://127.0.0.1",
     ...overrides,
+  };
+  return {
+    ...base,
+    allowedHosts: overrides.allowedHosts ?? allowedHostnames(base.publicUrl),
   };
 }
 
