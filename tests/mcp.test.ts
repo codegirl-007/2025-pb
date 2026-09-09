@@ -90,16 +90,17 @@ describe("MCP transport", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns JSON 404 for OAuth discovery probes", async () => {
+  it("returns JSON 401 for OAuth discovery probes", async () => {
     for (const path of [
       "/.well-known/oauth-authorization-server",
       "/.well-known/oauth-protected-resource",
       "/.well-known/oauth-protected-resource/mcp",
       "/.well-known/openid-configuration",
     ]) {
-      const res = await request(app).get(path).expect(404);
+      const res = await request(app).get(path).expect(401);
       expect(res.headers["content-type"]).toMatch(/json/);
-      expect(res.body.error).toBe("not_found");
+      expect(res.headers["www-authenticate"]).toBeUndefined();
+      expect(res.body.error).toBe("invalid_token");
       expect(JSON.stringify(res.body)).not.toMatch(/<!doctype html/i);
     }
   });

@@ -25,8 +25,11 @@ function isOauthDiscoveryPath(path: string): boolean {
 }
 
 function rejectOauthDiscovery(_req: Request, res: Response) {
-  res.status(404).json({
-    error: "not_found",
+  // Remote HTTP MCP clients probe this path and parse the body as OAuth JSON.
+  // A 404 is treated as a failed OAuth response; 401 is the spec path that skips OAuth.
+  // https://ainoya.dev/posts/fixing-invalid-oauth-error-response-when-connecting-cursor-to-a-custom-mcp-server/
+  res.status(401).json({
+    error: "invalid_token",
     error_description: "This MCP server does not use OAuth.",
   });
 }
