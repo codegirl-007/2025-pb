@@ -271,6 +271,7 @@ export const mcpConfigExample = (url: string) => ({
   mcpServers: {
     "birthday-mcp": {
       url,
+      transport: "http",
     },
   },
 });

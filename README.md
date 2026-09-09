@@ -59,7 +59,8 @@ Example Cursor config (the token is unique per session):
 {
   "mcpServers": {
     "birthday-mcp": {
-      "url": "http://127.0.0.1:8790/mcp/<secretToken>"
+      "url": "http://127.0.0.1:8790/mcp/<secretToken>",
+      "transport": "http"
     }
   }
 }

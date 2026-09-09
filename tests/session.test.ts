@@ -16,7 +16,7 @@ describe("sessions", () => {
       expect(a.body.mcpUrl).not.toBe(b.body.mcpUrl);
       expect(a.body.sessionId).not.toBe(b.body.sessionId);
       expect(a.body.mcpConfig.mcpServers["birthday-mcp"].url).toBe(a.body.mcpUrl);
-      expect(a.body.mcpConfig.mcpServers["birthday-mcp"].transport).toBeUndefined();
+      expect(a.body.mcpConfig.mcpServers["birthday-mcp"].transport).toBe("http");
       expect(a.body.secretToken).toBeUndefined();
 
       store.dispatchById(a.body.sessionId, "start_game", {});

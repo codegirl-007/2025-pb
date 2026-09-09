@@ -29,7 +29,7 @@ function toCreated(stored: StoredSession): CreateSessionResponse {
     sessionCode: stored.sessionCode,
     mcpUrl,
     mcpConfig: stored.mcpConfig ?? {
-      mcpServers: { "birthday-mcp": { url: mcpUrl } },
+      mcpServers: { "birthday-mcp": { url: mcpUrl, transport: "http" } },
     },
     prompt: stored.prompt ?? landing.prompt,
     inspectorHint: stored.inspectorHint ?? "",
