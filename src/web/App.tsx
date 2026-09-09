@@ -87,7 +87,7 @@ export function App() {
       ) : (
         <main className="os-desktop">
           <ArchWallpaper />
-          <OsWindow title="terminal">
+          <OsWindow title="primeagen">
             <SetupScreen
               created={setupCreated}
               connectionState={connectionState}

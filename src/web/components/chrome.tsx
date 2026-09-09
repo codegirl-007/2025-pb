@@ -6,11 +6,11 @@ export function ConnectionLabel({ state }: { state: string }) {
 }
 
 export function focusedWindowTitle(snapshot: PublicSession | null) {
-  if (!snapshot || snapshot.stage === "waiting") return "terminal";
+  if (!snapshot || snapshot.stage === "waiting") return "primeagen 39";
   const focused = snapshot.visual.windows.find((win) => win.open && win.focused);
   if (focused?.title) return focused.title;
-  if (snapshot.stage === "complete") return "primeagen 40.0";
-  return "terminal";
+  if (snapshot.stage === "complete") return "primeagen 40";
+  return "primeagen 39";
 }
 
 export function TopBar({ snapshot, clock }: { snapshot: PublicSession | null; clock: string }) {
@@ -24,8 +24,6 @@ export function TopBar({ snapshot, clock }: { snapshot: PublicSession | null; cl
       </div>
       <div className="waybar-center">{focusedWindowTitle(snapshot)}</div>
       <div className="waybar-right">
-        <span>{snapshot?.sessionCode ?? "no session"}</span>
-        <ConnectionLabel state={state} />
         <span className="waybar-clock">{clock}</span>
       </div>
     </header>
