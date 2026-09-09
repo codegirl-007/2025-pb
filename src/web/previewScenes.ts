@@ -56,6 +56,7 @@ function fixture(stamp: number, stage: PublicSession["stage"], visual: Partial<V
     shipDecision: null,
     stats: { mcpCalls: 8, invalidCalls: 0, humanInterventions: 2, messagesExchanged: 6 },
     events: [],
+    generation: 0,
     ...rest,
   };
 }

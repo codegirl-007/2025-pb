@@ -252,7 +252,7 @@ export const toolDescriptions = {
   get_status:
     "Return the current stage, objective, completed steps, and whether the human must be consulted. Use when you need a compact briefing.",
   reset_game:
-    "Reset only this session. Requires { confirm: true }. The website returns to waiting for an agent.",
+    "Reset this game to waiting so it can be played again. Requires { confirm: true }. The MCP connection stays active.",
 } as const;
 
 export const choices = {
@@ -269,12 +269,11 @@ export const choices = {
 
 export const mcpConfigExample = (url: string) => ({
   mcpServers: {
-    "primeagen-mcp": {
+    "birthday-mcp": {
       url,
-      transport: "http",
     },
   },
 });
 
 export const inspectorHint = (url: string) =>
-  `Paste ${url} once. Reset or create a new session on the website.`;
+  `Paste ${url} into Cursor. Reset Game keeps this URL. Disconnect invalidates it.`;

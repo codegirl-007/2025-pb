@@ -3,6 +3,8 @@ import type { EngineResult, PublicSession, SessionEvent, SessionState, ToolName 
 
 type Listener = (event: SessionEvent, snapshot: PublicSession) => void;
 
+const STALE_RESET_ERROR = "Session was reset. Continue from the current objective.";
+
 export class SessionStore {
   private sessions = new Map<string, SessionState>();
   private byCode = new Map<string, string>();
@@ -72,6 +74,39 @@ export class SessionStore {
     return this.apply(state, tool, args);
   }
 
+  resetGame(sessionId: string): EngineResult | { ok: false; error: string } {
+    return this.dispatchById(sessionId, "reset_game", { confirm: true });
+  }
+
+  destroy(sessionId: string): boolean {
+    const state = this.sessions.get(sessionId);
+    if (!state) return false;
+    const snapshot = toPublicSession(state);
+    const event: SessionEvent = {
+      eventId: `${sessionId}:destroyed`,
+      sessionId,
+      stateVersion: state.stateVersion,
+      type: "destroyed",
+      payload: {},
+      timestamp: this.now().toISOString(),
+    };
+    this.emit(sessionId, event, snapshot);
+    this.delete(state);
+    return true;
+  }
+
+  commitIfCurrent(sessionId: string, generation: number, result: EngineResult): EngineResult | { ok: false; error: string } {
+    const current = this.sessions.get(sessionId);
+    if (!current || this.isExpired(current)) {
+      if (current) this.delete(current);
+      return { ok: false, error: "Unknown session." };
+    }
+    if (current.generation !== generation) {
+      return { ok: false, error: STALE_RESET_ERROR };
+    }
+    return this.write(result);
+  }
+
   subscribe(sessionId: string, listener: Listener): () => void {
     const set = this.listeners.get(sessionId) ?? new Set();
     set.add(listener);
@@ -97,11 +132,16 @@ export class SessionStore {
     return removed;
   }
 
-  private apply(state: SessionState, tool: ToolName, args: unknown): EngineResult {
+  private apply(state: SessionState, tool: ToolName, args: unknown): EngineResult | { ok: false; error: string } {
+    const generation = state.generation;
     const result = handleTool(state, tool, args, this.now());
-    const previousToken = state.secretToken;
-    if (previousToken !== result.state.secretToken) {
-      this.byToken.delete(previousToken);
+    return this.commitIfCurrent(state.sessionId, generation, result);
+  }
+
+  private write(result: EngineResult): EngineResult {
+    const previous = this.sessions.get(result.state.sessionId);
+    if (previous && previous.secretToken !== result.state.secretToken) {
+      this.byToken.delete(previous.secretToken);
       this.byToken.set(result.state.secretToken, result.state.sessionId);
     }
     this.sessions.set(result.state.sessionId, result.state);

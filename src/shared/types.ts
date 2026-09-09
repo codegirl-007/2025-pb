@@ -133,6 +133,7 @@ export interface SessionState {
   sessionId: string;
   sessionCode: string;
   secretToken: string;
+  generation: number;
   stage: Stage;
   connectionState: ConnectionState;
   stateVersion: number;

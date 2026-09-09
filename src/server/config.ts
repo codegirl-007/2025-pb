@@ -1,4 +1,5 @@
 export const PRODUCTION_ORIGIN = "https://www.theprimeagenbirthday.com";
+export const DEFAULT_PORT = 8790;
 
 const LOCAL_HOSTS = ["127.0.0.1", "localhost", "[::1]"];
 const PRODUCTION_HOSTS = [
@@ -41,7 +42,7 @@ export function allowedHostnames(publicUrl: string, extra: string[] = []): strin
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   const isProduction = env.NODE_ENV === "production";
-  const port = Number(env.PORT ?? 8787);
+  const port = Number(env.PORT ?? DEFAULT_PORT);
   const host = env.HOST ?? (isProduction ? "0.0.0.0" : "127.0.0.1");
   const publicUrl = env.PUBLIC_URL ?? (isProduction ? PRODUCTION_ORIGIN : `http://${host}:${port}`);
   const extraHosts = (env.ALLOWED_HOSTS ?? "").split(",");

@@ -39,6 +39,11 @@ export function attachWebSocket(server: Server, store: SessionStore) {
     store.claim(sessionId);
     send(ws, { type: "snapshot", snapshot });
     const unsubscribe = store.subscribe(sessionId, (event: SessionEvent, next: PublicSession) => {
+      if (event.type === "destroyed") {
+        send(ws, { type: "error", message: "session destroyed" });
+        ws.close(4404, "unknown session");
+        return;
+      }
       send(ws, { type: "event", event, snapshot: next });
     });
 
@@ -47,7 +52,12 @@ export function attachWebSocket(server: Server, store: SessionStore) {
         const parsed = JSON.parse(String(raw)) as { type?: string };
         if (parsed.type === "ping") {
           const latest = store.snapshot(sessionId);
-          if (latest) send(ws, { type: "snapshot", snapshot: latest });
+          if (!latest) {
+            send(ws, { type: "error", message: "unknown session" });
+            ws.close(4404, "unknown session");
+            return;
+          }
+          send(ws, { type: "snapshot", snapshot: latest });
         }
       } catch {
         send(ws, { type: "error", message: "invalid message" });

@@ -113,7 +113,7 @@ export function mountMcp(app: Express, store: SessionStore, limiter: RateLimiter
   app.all("/mcp/:token", (req: Request, res: Response) => {
     const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
     if (!token || !store.getByToken(token)) {
-      res.status(401).json({
+      res.status(404).json({
         jsonrpc: "2.0",
         error: { code: -32001, message: "Unknown session token" },
         id: null,

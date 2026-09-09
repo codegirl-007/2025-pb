@@ -43,7 +43,7 @@ function CreatedDetails({ created }: { created: CreateSessionResponse }) {
         </p>
       </li>
       <li>
-        <p>Paste this MCP config once (or ask your agent to set up this mcp).</p>
+        <p>Paste this MCP config into Cursor. Reset Game keeps this URL. Disconnect invalidates it.</p>
         <pre className="codebox">{config}</pre>
         <div className="row">
           <button className="primary" onClick={() => void copy(config)}>

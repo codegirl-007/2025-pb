@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { landing } from "../content/index";
 import type { CreateSessionResponse } from "../shared/types";
-import { createSession, resetSession } from "./api";
+import { createSession, destroySession, resetSession } from "./api";
 import { Desktop } from "./components/Desktop";
 import { DevPanel } from "./components/DevPanel";
 import { SetupScreen } from "./components/SetupScreen";
@@ -29,7 +29,7 @@ function toCreated(stored: StoredSession): CreateSessionResponse {
     sessionCode: stored.sessionCode,
     mcpUrl,
     mcpConfig: stored.mcpConfig ?? {
-      mcpServers: { "birthday-mcp": { url: mcpUrl, transport: "http" } },
+      mcpServers: { "birthday-mcp": { url: mcpUrl } },
     },
     prompt: stored.prompt ?? landing.prompt,
     inspectorHint: stored.inspectorHint ?? "",
@@ -134,19 +134,26 @@ export function App() {
               });
             }}
           >
-            Reset
+            Reset Game
           </button>
           <button onClick={() => setSound((v) => !v)}>{sound ? "Sound on" : "Sound off"}</button>
           <button onClick={() => setForceReduced((v) => !v)}>{reducedMotion ? "Motion off" : "Motion on"}</button>
           <button onClick={() => setHighContrast((v) => !v)}>{highContrast ? "Contrast high" : "Contrast"}</button>
           <button
             onClick={() => {
-              clearStoredSession();
-              setStored(null);
-              setCreated(null);
+              const finish = () => {
+                clearStoredSession();
+                setStored(null);
+                setCreated(null);
+              };
+              if (!sessionId) {
+                finish();
+                return;
+              }
+              void destroySession(sessionId).finally(finish);
             }}
           >
-            New browser session
+            Disconnect
           </button>
         </div>
       </details>

@@ -33,6 +33,14 @@ export function resetSession(sessionId: string): Promise<PublicSession> {
   }).then((res) => parseJson(res));
 }
 
+export function destroySession(sessionId: string): Promise<{ ok: true }> {
+  return fetch(`/api/sessions/${sessionId}/destroy`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ confirm: true }),
+  }).then((res) => parseJson(res));
+}
+
 export function callDevTool(sessionId: string, name: ToolName, args: unknown) {
   return fetch(`/api/dev/sessions/${sessionId}/tools`, {
     method: "POST",

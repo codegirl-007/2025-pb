@@ -104,6 +104,10 @@ describe("state progression", () => {
     expect(reset.state.stage).toBe("waiting");
     expect(reset.state.sessionId).toBe(started.sessionId);
     expect(reset.state.secretToken).toBe(started.secretToken);
+    expect(reset.state.generation).toBe(started.generation + 1);
+    expect(reset.state.sessionCode).toBe(started.sessionCode);
+    expect(reset.state.completedActions).toEqual([]);
+    expect(reset.state.agentLabel).toBeNull();
     expect(handleTool(started, "reset_game", { confirm: false }).ok).toBe(false);
   });
 });

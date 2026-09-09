@@ -66,12 +66,19 @@ export function emptyVisual(): VisualState {
   };
 }
 
-export function createInitialState(now: Date, ids?: { sessionId?: string; sessionCode?: string; secretToken?: string }): SessionState {
-  const createdAt = now.toISOString();
+export function createInitialState(now: Date, ids?: {
+  sessionId?: string;
+  sessionCode?: string;
+  secretToken?: string;
+  generation?: number;
+  createdAt?: string;
+}): SessionState {
+  const createdAt = ids?.createdAt ?? now.toISOString();
   return {
     sessionId: ids?.sessionId ?? randomUUID(),
     sessionCode: ids?.sessionCode ?? generateSessionCode(),
     secretToken: ids?.secretToken ?? generateSecretToken(),
+    generation: ids?.generation ?? 0,
     stage: "waiting",
     connectionState: "waiting_for_agent",
     stateVersion: 0,
@@ -80,7 +87,7 @@ export function createInitialState(now: Date, ids?: { sessionId?: string; sessio
     completedActions: [],
     visual: emptyVisual(),
     createdAt,
-    lastActivityAt: createdAt,
+    lastActivityAt: now.toISOString(),
     agentConnectedAt: null,
     completedAt: null,
     complete: false,
@@ -708,21 +715,13 @@ function handleReset(state: SessionState, now: Date): EngineResult {
     sessionId: state.sessionId,
     sessionCode: state.sessionCode,
     secretToken: state.secretToken,
+    generation: state.generation + 1,
+    createdAt: state.createdAt,
   };
   const next = createInitialState(now, preserved);
   next.stateVersion = state.stateVersion + 1;
   next.lastActivityAt = now.toISOString();
-  const event = pushEvent(next, "reset", { sessionId: next.sessionId }, now);
-  next.stats.mcpCalls = state.stats.mcpCalls + 1;
-  next.transcript.push({
-    id: randomUUID(),
-    at: now.toISOString(),
-    actor: "system",
-    tool: "reset_game",
-    text: "Session reset.",
-    ok: true,
-  });
-  addActivity(next, "reset_game", "Session reset.", true, now);
+  const event = pushEvent(next, "reset", { sessionId: next.sessionId, generation: next.generation }, now);
   return {
     ok: true,
     state: next,

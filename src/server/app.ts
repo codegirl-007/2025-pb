@@ -13,25 +13,21 @@ import { SessionStore } from "./store";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-function isOauthDiscoveryPath(path: string): boolean {
+export function isOauthDiscoveryPath(pathname: string): boolean {
+  if (pathname === "/register" || pathname === "/register/" || pathname.endsWith("/register") || pathname.endsWith("/register/")) {
+    return true;
+  }
   return (
-    path === "/.well-known/oauth-authorization-server" ||
-    path.startsWith("/.well-known/oauth-authorization-server/") ||
-    path === "/.well-known/oauth-protected-resource" ||
-    path.startsWith("/.well-known/oauth-protected-resource/") ||
-    path === "/.well-known/openid-configuration" ||
-    path.startsWith("/.well-known/openid-configuration/")
+    pathname.includes("/.well-known/oauth-authorization-server") ||
+    pathname.includes("/.well-known/oauth-protected-resource") ||
+    pathname.includes("/.well-known/openid-configuration")
   );
 }
 
 function rejectOauthDiscovery(_req: Request, res: Response) {
-  // Remote HTTP MCP clients probe this path and parse the body as OAuth JSON.
-  // A 404 is treated as a failed OAuth response; 401 is the spec path that skips OAuth.
-  // https://ainoya.dev/posts/fixing-invalid-oauth-error-response-when-connecting-cursor-to-a-custom-mcp-server/
-  res.status(401).json({
-    error: "invalid_token",
-    error_description: "This MCP server does not use OAuth.",
-  });
+  // Cursor probes these URLs and parses the body as OAuth JSON.
+  // 401 makes it start an OAuth flow; a JSON 404 means this server has no auth metadata.
+  res.status(404).json({ error: "not_found" });
 }
 
 function clientIp(req: Request): string {
@@ -41,6 +37,10 @@ function clientIp(req: Request): string {
 function param(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return value[0] ?? "";
   return value ?? "";
+}
+
+function mcpUrlFor(publicUrl: string, token: string) {
+  return `${publicUrl}/mcp/${token}`;
 }
 
 function publicSnapshot(store: SessionStore, sessionId: string) {
@@ -81,7 +81,7 @@ export function createApp(config: ServerConfig, store = new SessionStore(config.
       return;
     }
     const session = store.create();
-    const mcpUrl = `${config.publicUrl}/mcp`;
+    const mcpUrl = mcpUrlFor(config.publicUrl, session.secretToken);
     res.status(201).json({
       sessionId: session.sessionId,
       sessionCode: session.sessionCode,
@@ -108,12 +108,25 @@ export function createApp(config: ServerConfig, store = new SessionStore(config.
       return;
     }
     const sessionId = param(req.params.sessionId);
-    const result = store.dispatchById(sessionId, "reset_game", { confirm: true });
+    const result = store.resetGame(sessionId);
     if (!("mcp" in result)) {
       res.status(404).json({ error: result.error });
       return;
     }
     res.json(publicSnapshot(store, sessionId));
+  });
+
+  app.post("/api/sessions/:sessionId/destroy", (req, res) => {
+    if (req.body?.confirm !== true) {
+      res.status(400).json({ error: "Pass { confirm: true } to disconnect." });
+      return;
+    }
+    const sessionId = param(req.params.sessionId);
+    if (!store.destroy(sessionId)) {
+      res.status(404).json({ error: "Session not found." });
+      return;
+    }
+    res.json({ ok: true });
   });
 
   if (!config.isProduction) {
@@ -154,7 +167,8 @@ export function mountFrontend(app: Express, config: ServerConfig) {
         req.path.startsWith("/api") ||
         req.path.startsWith("/mcp") ||
         req.path.startsWith("/ws") ||
-        req.path.startsWith("/.well-known")
+        req.path.startsWith("/.well-known") ||
+        req.path === "/register"
       ) {
         next();
         return;
