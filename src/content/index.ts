@@ -189,9 +189,9 @@ export const reveal = {
   letter: [
     "Happy 40th birthday, Prime.",
     "",
-    "This is the third unnecessary birthday website I’ve made you, and somehow I’m still finding new ways to make you participate in them.",
+    "This is the third birthday website I’ve made you, and somehow I’m still finding new ways to make you participate in them. It's become a yearly tradition.",
     "",
-    "I hope 40 is a great one full of love, happiness and 2 more years of your wonderful mullet.",
+    "I hope 40 is a great one, full of love, happiness and many more years to come. Very happy birthday!",
     "",
     "— Stephanie",
   ].join("\n"),
