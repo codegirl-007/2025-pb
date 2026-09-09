@@ -89,4 +89,18 @@ describe("MCP transport", () => {
       .send({ jsonrpc: "2.0", id: 1, method: "tools/list" });
     expect(res.status).toBe(401);
   });
+
+  it("returns JSON 404 for OAuth discovery probes", async () => {
+    for (const path of [
+      "/.well-known/oauth-authorization-server",
+      "/.well-known/oauth-protected-resource",
+      "/.well-known/oauth-protected-resource/mcp",
+      "/.well-known/openid-configuration",
+    ]) {
+      const res = await request(app).get(path).expect(404);
+      expect(res.headers["content-type"]).toMatch(/json/);
+      expect(res.body.error).toBe("not_found");
+      expect(JSON.stringify(res.body)).not.toMatch(/<!doctype html/i);
+    }
+  });
 });

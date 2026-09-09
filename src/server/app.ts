@@ -13,6 +13,24 @@ import { SessionStore } from "./store";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
+function isOauthDiscoveryPath(path: string): boolean {
+  return (
+    path === "/.well-known/oauth-authorization-server" ||
+    path.startsWith("/.well-known/oauth-authorization-server/") ||
+    path === "/.well-known/oauth-protected-resource" ||
+    path.startsWith("/.well-known/oauth-protected-resource/") ||
+    path === "/.well-known/openid-configuration" ||
+    path.startsWith("/.well-known/openid-configuration/")
+  );
+}
+
+function rejectOauthDiscovery(_req: Request, res: Response) {
+  res.status(404).json({
+    error: "not_found",
+    error_description: "This MCP server does not use OAuth.",
+  });
+}
+
 function clientIp(req: Request): string {
   return req.ip ?? req.socket.remoteAddress ?? "unknown";
 }
@@ -41,6 +59,14 @@ export function createApp(config: ServerConfig, store = new SessionStore(config.
   const limiter = new RateLimiter();
 
   app.set("trust proxy", false);
+
+  app.use((req, res, next) => {
+    if (!isOauthDiscoveryPath(req.path)) {
+      next();
+      return;
+    }
+    rejectOauthDiscovery(req, res);
+  });
 
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, name: "birthday-mcp" });
@@ -121,7 +147,12 @@ export function mountFrontend(app: Express, config: ServerConfig) {
   if (config.isProduction) {
     const webRoot = path.resolve(here, "../web");
     app.use((req: Request, res: Response, next: NextFunction) => {
-      if (req.path.startsWith("/api") || req.path.startsWith("/mcp") || req.path.startsWith("/ws")) {
+      if (
+        req.path.startsWith("/api") ||
+        req.path.startsWith("/mcp") ||
+        req.path.startsWith("/ws") ||
+        req.path.startsWith("/.well-known")
+      ) {
         next();
         return;
       }
